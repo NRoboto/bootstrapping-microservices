@@ -2,12 +2,8 @@ import express from "express";
 import fs from "fs";
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 const PATH = "videos/SampleVideo_1280x720_1mb.mp4";
-
-if (!PORT) {
-  throw new Error('Environment variable "PORT" must be set');
-}
 
 app.get("*", (req, _res, next) => {
   console.log(`Request from ${req.ip} for route ${req.path}`);
