@@ -1,39 +1,57 @@
 import express from "express";
-import fs from "fs";
 import http from "http";
+import mongodb from "mongodb";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const { VIDEO_STORAGE_HOST, VIDEO_STORAGE_PORT } = process.env;
+const { VIDEO_STORAGE_HOST, VIDEO_STORAGE_PORT, DBHOST, DBNAME } = process.env;
 
-app.get("*", (req, _res, next) => {
-  console.log(`Request from ${req.ip} for route ${req.path}`);
+(async () => {
+  const client = await mongodb.MongoClient.connect(DBHOST);
+  const db = client.db(DBNAME);
+  const videosCollection = db.collection("videos");
 
-  next();
-});
+  app.get("*", (req, _res, next) => {
+    console.log(`Request from ${req.ip} for route ${req.path}`);
 
-app.get("/", (_req, res) => {
-  res.send("Hello World!");
-});
+    next();
+  });
 
-app.get("/video", (req, res) => {
-  const forwardReq = http.request(
-    {
-      host: VIDEO_STORAGE_HOST,
-      port: VIDEO_STORAGE_PORT,
-      path: "/video?path=SampleVideo_1280x720_1mb.mp4",
-      method: "GET",
-      headers: req.headers,
-    },
-    (forwardRes) => {
-      res.writeHead(forwardRes.statusCode, forwardRes.headers);
-      forwardRes.pipe(res);
+  app.get("/video", async (req, res) => {
+    const videoId = req.query.id;
+
+    const videoRecord = await videosCollection
+      .findOne({ _id: videoId })
+      .catch((err) => {
+        console.error("Database query failed", (err && err.stack) || err);
+        res.sendStatus(500);
+      });
+
+    if (!videoRecord) {
+      res.sendStatus(404);
+      return;
     }
-  );
 
-  req.pipe(forwardReq);
-});
+    const forwardReq = http.request(
+      {
+        host: VIDEO_STORAGE_HOST,
+        port: VIDEO_STORAGE_PORT,
+        path: `/video?path=${videoRecord.path}`,
+        method: "GET",
+        headers: req.headers,
+      },
+      (forwardRes) => {
+        res.writeHead(forwardRes.statusCode, forwardRes.headers);
+        forwardRes.pipe(res);
+      }
+    );
 
-app.listen(PORT, () => {
-  console.log(`Listening on port ${PORT}`);
+    req.pipe(forwardReq);
+  });
+
+  app.listen(PORT, () => {
+    console.log(`Listening on port ${PORT}`);
+  });
+})().catch((err) => {
+  console.error("Service failed to start", (err && err.stack) || err);
 });
