@@ -14,3 +14,20 @@ services:
       - PORT=80 # Set the PORT env var
 
     restart: "no" # Don't automatically restart when the service crashes
+
+  google-storage:
+    image: google-storage
+    build:
+      context: ./google-storage
+    container_name: video-storage
+
+    ports:
+      - 4001:80
+
+    environment:
+      - PORT=80
+      - GOOGLE_CREDENTIALS_EMAIL=email
+      - GOOGLE_CREDENTIALS_PRIVATE_KEY=key
+      - GOOGLE_PROJECT_ID=id
+
+    restart: "no"
