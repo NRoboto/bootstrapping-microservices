@@ -4,8 +4,12 @@ services:
     image: video-streaming # The image to build
     build: # Options used when building the image
       context: ./video-streaming # Root dir for the microservice
-      dockerfile: Dockerfile # Dockerfile name relative to the context
+      dockerfile: Dockerfile-dev # Dockerfile name relative to the context
     container_name: video-streaming # Set the container's name
+
+    volumes:
+      - /tmp/history/npm-cache:/root/.npm:z
+      - ./video-streaming/src:/usr/src/app/src:z
 
     ports:
       - 4000:80 # Map host port 4000 to container port 80
