@@ -66,5 +66,7 @@ services:
     environment:
       - PORT=80
       - NODE_ENV=development
+      - DBHOST=mongodb://database:27017
+      - DBNAME=history
 
     restart: "no"

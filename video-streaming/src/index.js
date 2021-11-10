@@ -6,6 +6,26 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const { VIDEO_STORAGE_HOST, VIDEO_STORAGE_PORT, DBHOST, DBNAME } = process.env;
 
+const sendViewedMessage = (videoPath) => {
+  const req = http.request("http://history/viewed", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  req.on("close", () => {});
+
+  req.on("error", () => {});
+
+  req.write(
+    JSON.stringify({
+      videoPath,
+    })
+  );
+  req.end();
+};
+
 (async () => {
   const client = await mongodb.MongoClient.connect(DBHOST);
   const db = client.db(DBNAME);
@@ -41,6 +61,7 @@ const { VIDEO_STORAGE_HOST, VIDEO_STORAGE_PORT, DBHOST, DBNAME } = process.env;
         headers: req.headers,
       },
       (forwardRes) => {
+        sendViewedMessage(videoRecord.path);
         res.writeHead(forwardRes.statusCode, forwardRes.headers);
         forwardRes.pipe(res);
       }
