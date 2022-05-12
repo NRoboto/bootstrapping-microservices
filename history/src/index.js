@@ -2,6 +2,8 @@ import express from "express";
 import mongodb from "mongodb";
 import amqp from "amqplib";
 
+const VIEWED_QUEUE = "viewed";
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const { DBHOST, DBNAME, RABBIT } = process.env;
@@ -17,6 +19,14 @@ const connectRabbit = async () => {
   const db = client.db(DBNAME);
   const videosCollection = db.collection("videos");
   const messageChannel = await connectRabbit();
+
+  await messageChannel.assertQueue(VIEWED_QUEUE);
+  messageChannel.consume(VIEWED_QUEUE, async (msg) => {
+    const parsedMessage = JSON.parse(msg.content.toString());
+
+    await videosCollection.insertOne({ videoPath: parsedMessage.videoPath });
+    messageChannel.ack(msg);
+  });
 
   app.use(express.json());
 

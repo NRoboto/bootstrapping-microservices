@@ -1,35 +1,34 @@
 import express from "express";
 import http from "http";
 import mongodb from "mongodb";
+import amqp from "amqplib";
+
+const VIEWED_QUEUE = "viewed";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const { VIDEO_STORAGE_HOST, VIDEO_STORAGE_PORT, DBHOST, DBNAME } = process.env;
+const { VIDEO_STORAGE_HOST, VIDEO_STORAGE_PORT, DBHOST, DBNAME, RABBIT } =
+  process.env;
 
-const sendViewedMessage = (videoPath) => {
-  const req = http.request("http://history/viewed", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  req.on("close", () => {});
-
-  req.on("error", () => {});
-
-  req.write(
-    JSON.stringify({
-      videoPath,
-    })
+const sendViewedMessage = (messageChannel, videoPath) => {
+  messageChannel.publish(
+    "",
+    VIEWED_QUEUE,
+    Buffer.from(JSON.stringify({ videoPath }))
   );
-  req.end();
+};
+
+const connectRabbit = async () => {
+  const connection = await amqp.connect(RABBIT);
+
+  return connection.createChannel();
 };
 
 (async () => {
   const client = await mongodb.MongoClient.connect(DBHOST);
   const db = client.db(DBNAME);
   const videosCollection = db.collection("videos");
+  const messageChannel = await connectRabbit();
 
   app.get("*", (req, _res, next) => {
     console.log(`Request from ${req.ip} for route ${req.path}`);
@@ -61,7 +60,7 @@ const sendViewedMessage = (videoPath) => {
         headers: req.headers,
       },
       (forwardRes) => {
-        sendViewedMessage(videoRecord.path);
+        sendViewedMessage(messageChannel, videoRecord.path);
         res.writeHead(forwardRes.statusCode, forwardRes.headers);
         forwardRes.pipe(res);
       }
