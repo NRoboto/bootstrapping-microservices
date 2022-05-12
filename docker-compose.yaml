@@ -68,5 +68,24 @@ services:
       - NODE_ENV=development
       - DBHOST=mongodb://database:27017
       - DBNAME=history
+      - RABBIT=amqp://guest:guest@rabbit:5672
+
+    depends_on:
+      - database
+      - rabbit
 
     restart: "no"
+
+  rabbit:
+    image: rabbitmq:3.8.1-management
+    container_name: rabbit
+
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+    expose:
+      - 5672
+      - 15672
+
+    restart: always

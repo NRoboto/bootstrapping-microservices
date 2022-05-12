@@ -1,14 +1,22 @@
 import express from "express";
 import mongodb from "mongodb";
+import amqp from "amqplib";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const { DBHOST, DBNAME } = process.env;
+const { DBHOST, DBNAME, RABBIT } = process.env;
+
+const connectRabbit = async () => {
+  const connection = await amqp.connect(RABBIT);
+
+  return connection.createChannel();
+};
 
 (async () => {
   const client = await mongodb.MongoClient.connect(DBHOST);
   const db = client.db(DBNAME);
   const videosCollection = db.collection("videos");
+  const messageChannel = await connectRabbit();
 
   app.use(express.json());
 
