@@ -3,7 +3,7 @@ import http from "http";
 import mongodb from "mongodb";
 import amqp from "amqplib";
 
-const VIEWED_QUEUE = "viewed";
+const VIEWED_EXCHANGE = "viewed";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,8 +12,8 @@ const { VIDEO_STORAGE_HOST, VIDEO_STORAGE_PORT, DBHOST, DBNAME, RABBIT } =
 
 const sendViewedMessage = (messageChannel, videoPath) => {
   messageChannel.publish(
+    VIEWED_EXCHANGE,
     "",
-    VIEWED_QUEUE,
     Buffer.from(JSON.stringify({ videoPath }))
   );
 };
@@ -29,6 +29,7 @@ const connectRabbit = async () => {
   const db = client.db(DBNAME);
   const videosCollection = db.collection("videos");
   const messageChannel = await connectRabbit();
+  messageChannel.assertExchange(VIEWED_EXCHANGE, "fanout");
 
   app.get("*", (req, _res, next) => {
     console.log(`Request from ${req.ip} for route ${req.path}`);
