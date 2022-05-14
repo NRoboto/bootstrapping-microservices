@@ -10,6 +10,6 @@ terraform {
 provider "google" {
   credentials = file("service-account-credentials.json")
 
-  project = "corded-dragon-331111"
-  region  = "eu-west1"
+  project = var.project
+  region  = var.region
 }
