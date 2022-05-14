@@ -1,0 +1,4 @@
+.terraform
+service-account-credentials.json
+terraform.tfstate
+terraform.tfstate.backup
