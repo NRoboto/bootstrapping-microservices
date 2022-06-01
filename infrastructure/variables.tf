@@ -7,5 +7,9 @@ variable "project" {
 }
 
 variable "region" {
-  default = "eu-west1"
+  default = "europe-west1"
+}
+
+variable "zone" {
+  default = "b"
 }
