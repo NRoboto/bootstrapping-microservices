@@ -15,7 +15,7 @@ resource "google_container_node_pool" "node_pool" {
   name       = "${var.app_name}-node-pool"
   location   = var.region
   cluster    = google_container_cluster.cluster.name
-  node_count = 1
+  node_count = 0
 
   node_config {
     preemptible  = true
@@ -23,5 +23,10 @@ resource "google_container_node_pool" "node_pool" {
 
     service_account = google_service_account.kubernetes_node_pool_service_worker.email
     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
+  }
+
+  autoscaling {
+    max_node_count = 1
+    min_node_count = 0
   }
 }
