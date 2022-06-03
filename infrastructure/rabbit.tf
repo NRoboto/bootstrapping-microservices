@@ -66,7 +66,5 @@ resource "kubernetes_service" "rabbit_dashboard" {
     port {
       port = 15672
     }
-
-    type = "LoadBalancer"
   }
 }
